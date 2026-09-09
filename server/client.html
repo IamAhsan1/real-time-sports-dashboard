@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+  <head>
+    <title>WebSocket Broadcast Client</title>
+  </head>
+
+  <body>
+    <h1>WebSocket Broadcast Server</h1>
+
+    <form id="messageForm">
+      <label for="message">Message:</label>
+
+      <input
+        type="text"
+        id="message"
+        placeholder="Enter message"
+        autocomplete="off"
+      />
+
+      <button type="submit">
+        Send Message
+      </button>
+    </form>
+
+    <h2>Messages</h2>
+
+    <pre id="messages"></pre>
+
+    <script>
+      const ws = new WebSocket("ws://localhost:8080");
+
+      const form = document.getElementById("messageForm");
+      const messageInput = document.getElementById("message");
+      const messages = document.getElementById("messages");
+
+
+      // -----------------------------
+      // WebSocket Connected
+      // -----------------------------
+
+      ws.addEventListener("open", () => {
+        console.log("✅ Connected to server");
+
+        messages.textContent += "🟢 Connected to server\n";
+      });
+
+
+      // -----------------------------
+      // Receive message
+      // -----------------------------
+
+      ws.addEventListener("message", (event) => {
+        console.log("📩 Server:", event.data);
+
+        messages.textContent += `📩 ${event.data}\n`;
+      });
+
+
+      // -----------------------------
+      // WebSocket Error
+      // -----------------------------
+
+      ws.addEventListener("error", (error) => {
+        console.log("❌ WebSocket Error:", error);
+
+        messages.textContent += "❌ Connection error\n";
+      });
+
+
+      // -----------------------------
+      // WebSocket Closed
+      // -----------------------------
+
+      ws.addEventListener("close", () => {
+        console.log("🔴 Connection closed");
+
+        messages.textContent += "🔴 Connection closed\n";
+      });
+
+
+      // -----------------------------
+      // Form Submit
+      // -----------------------------
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        if (ws.readyState !== WebSocket.OPEN) {
+          console.log("❌ WebSocket is not open. Unable to send message.");
+
+          messages.textContent += "❌ Unable to send message. Connection is closed.\n";
+
+          return;
+        }
+
+        const message = messageInput.value.trim();
+
+        if (!message) {
+          return;
+        }
+
+        // Send message to WebSocket server
+        ws.send(message);
+
+        // Clear input
+        messageInput.value = "";
+
+        // Put cursor back in input
+        messageInput.focus();
+      });
+    </script>
+  </body>
+</html>
