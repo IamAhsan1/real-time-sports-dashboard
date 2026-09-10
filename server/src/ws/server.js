@@ -9,20 +9,14 @@ function sendJson(socket, payload) {
 }
 
 function sendBroadCast(wss, payload) {
-
-    wss.clients.forEach(client => {
-
+    wss.clients.forEach((client) => {
         if (client.readyState !== WebSocket.OPEN) {
-            console.error('WebSocket is not open. Ready state: ', client.readyState);
             return;
         }
-        if (client.readyState === WebSocket.OPEN) {
-            sendJson(client, payload);
-        }
 
+        client.send(JSON.stringify(payload));
     });
 }
-
 export function setupWebSocketServer(server) {
     const wss = new WebSocketServer({
         server,
