@@ -1,14 +1,33 @@
 import express from "express";
+import http from "http";
 import matchRouter from "./routes/matches.js";
-const app=express();
-app.use(express.json());    
+import { setupWebSocketServer } from "./ws/server.js";
+import dotenv from "dotenv";
+dotenv.config();
+const app = express();
+app.use(express.json());
 
-app.use("/matches",matchRouter);
-app.use("/matches",matchRouter);
+const hostname = process.env.HOSTNAME || 'localhost';
+const port = process.env.PORT || 3000;
+const server = http.createServer(app);
+const { broadcastMatchCreated } = setupWebSocketServer(server);
+app.locals.broadcastMatchCreated = broadcastMatchCreated;
 
-app.listen(3000,()=>{
-    console.log("Server is running on port 3000");
-})
+//routes 
+app.use("/matches", matchRouter);
+app.use("/matches", matchRouter);
+
+
+//Listen to the server
+server.listen(port, hostname, () => {
+
+    const baseUrl =
+        hostname === '0.0.0.0'
+            ? `http://localhost:${port}`
+            : `http://${hostname}:${port}`;
+
+    console.log(`Base URL: ${baseUrl}`);
+});
 
 
 
@@ -44,7 +63,7 @@ app.listen(3000,()=>{
 // const wss = new WebSocketServer({ port: 8080 });
 
 // wss.on("connection", (socket,req) => {
-//     const clientIP = req.socket.remoteAddress;      
+//     const clientIP = req.socket.remoteAddress;
 //     console.log(`Client connected from IP: ${clientIP}`);
 
 
