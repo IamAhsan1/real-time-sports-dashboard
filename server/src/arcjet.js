@@ -2,15 +2,20 @@ import 'dotenv/config';
 import arcjet, { detectBot, shield, slidingWindow } from '@arcjet/node';
 
 const arcjetKey = process.env.ARCJET_KEY;
-const arcjetMode = process.env.ARCJET_MODE === 'DRY_RUN' ? 'DRY_RUN' : 'LIVE';
+const arcjetMode = process.env.ARCJET_MODE === 'DRY_RUN'
+    || process.env.ARCJET_ENV === 'development'
+    ? 'DRY_RUN'
+    : 'LIVE';
 
 if (!arcjetKey) {
     throw new Error('ARCJET_KEY environment variable is not set');
 }
 
-const securityRules = (rateLimit) => [
+const securityRules = (rateLimit, includeBotDetection = true) => [
     shield({ mode: arcjetMode }),
-    detectBot({ mode: arcjetMode, allow: ['CATEGORY:SEARCH_ENGINE', 'CATEGORY:PREVIEW'] }),
+    ...(includeBotDetection
+        ? [detectBot({ mode: arcjetMode, allow: ['CATEGORY:SEARCH_ENGINE', 'CATEGORY:PREVIEW'] })]
+        : []),
     slidingWindow({ mode: arcjetMode, ...rateLimit })
 ];
 
@@ -21,7 +26,7 @@ export const httpArcjet = arcjet({
 
 export const wsArcjet = arcjet({
     key: arcjetKey,
-    rules: securityRules({ interval: 2, max: 5 })
+    rules: securityRules({ interval: 2, max: 5 }, false)
 });
 
 function handleDenial(res, decision) {
